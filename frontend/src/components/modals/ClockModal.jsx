@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Modal, Button, Form, ToggleButton, ToggleButtonGroup } from "react-bootstrap";
 import axios from "axios";
 import { toast } from "react-toastify";
+import BASE_API_FRTNEND from "../../config/apiConifg";
 
 export default function ClockModal({ show, onClose, onSave }) {
   const [mode, setMode] = useState("auto");
@@ -26,12 +27,12 @@ const handleSubmit = async (e) => {
       const hours = now.getHours().toString().padStart(2, "0");
       const minutes = now.getMinutes().toString().padStart(2, "0");
       finalTime = `${hours}:${minutes}`;
-      setTime(finalTime); // Update state untuk UI
+      setTime(finalTime);
     }
 
     const token = localStorage.getItem("token");
     await axios.post(
-      "http://localhost:5000/api/feature/edit-time",
+      `${BASE_API_FRTNEND}/api/feature/edit-time`,
       { time: finalTime, mode },
       {
         headers: {
@@ -48,7 +49,6 @@ const handleSubmit = async (e) => {
     toast.error("Gagal menyimpan jam!");
   }
 };
-
 
   return (
     <Modal show={show} onHide={onClose} centered backdrop="static" keyboard={false}>

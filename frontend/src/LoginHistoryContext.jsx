@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect, useCallback } from "react";
 import { LoginHistoryContext } from "./contexts/LoginHistoryContext";
+import BASE_API_FRTNEND from "./config/apiConifg";
 
 export const LoginHistoryProvider = ({ children }) => {
   const [loginHistory, setLoginHistory] = useState([]);
@@ -12,7 +13,7 @@ export const LoginHistoryProvider = ({ children }) => {
     if (!token) return;
 
     try {
-      const res = await axios.get("http://localhost:5000/api/auth/login-history", {
+      const res = await axios.get(`${BASE_API_FRTNEND}/api/auth/login-history`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -31,7 +32,7 @@ export const LoginHistoryProvider = ({ children }) => {
     if (!token) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/auth/login-history/${id}`, {
+      await axios.delete(`${BASE_API_FRTNEND}/api/auth/login-history/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -48,7 +49,7 @@ export const LoginHistoryProvider = ({ children }) => {
     if (!token) return;
 
     try {
-      await axios.delete("http://localhost:5000/api/auth/login-history", {
+      await axios.delete(`${BASE_API_FRTNEND}/api/auth/login-history`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

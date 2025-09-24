@@ -19,8 +19,9 @@ import { UserContext } from "../../src/contexts/userContext";
 import "../../styles/DasboardStyle.css";
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import BASE_API_FRTNEND from "../../src/config/apiConifg";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = `${BASE_API_FRTNEND}/api`;
 
 export default function DesktopDashboardLayout() {
   const { user: contextUser, setUser } = useContext(UserContext);
@@ -72,6 +73,11 @@ export default function DesktopDashboardLayout() {
         cache: "no-store"
       });
 
+      if (response.status === 401) {
+      handleLogout(); 
+      return;
+      }
+
       if (!response.ok) {
         throw new Error("Failed to fetch user profile");
       }
@@ -82,7 +88,7 @@ export default function DesktopDashboardLayout() {
         loading: false,
         error: null
       });
-      setUser(result.user); // Update context if needed
+      setUser(result.user);
     } catch (err) {
       console.error("User profile error:", err);
       setUserProfile(prev => ({
@@ -133,7 +139,7 @@ export default function DesktopDashboardLayout() {
     };
 
     fetchDashboardData();
-    fetchUserProfile(); // Fetch user profile on component mount
+    fetchUserProfile(); 
   }, [token]);
 
   const formatUserName = (user) => {
@@ -145,7 +151,6 @@ export default function DesktopDashboardLayout() {
     return user?.profile_picture_url || 
       `https://ui-avatars.com/api/?name=${encodeURIComponent(formatUserName(user))}&background=E2E8F0&color=475569`;
   };
-
 
   return (
     <div className="dashboard-grid">

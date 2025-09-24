@@ -1,3 +1,4 @@
+import path from 'path';
 import {
   registerUser,
   resetPassword,
@@ -14,7 +15,6 @@ import {
   getLatestRunningText,
   saveTextTemplate,
   getTemplatesHandler,
-  getDateTime,
   handleDateTime,
   handleEditTime,
   getTime,
@@ -23,7 +23,9 @@ import {
   getTemperature,
   deleteFeatureUsageById,
   deleteAllFeatureUsage,
-  handleSettingSpeedRunningText
+  handleSettingSpeedRunningText,
+  getDate,
+  getTimestamp
 } from '../handlers/handlers.js';
 
 export const authRoutes = [
@@ -154,7 +156,7 @@ export const authRoutes = [
   {
     method: "GET",
     path: "/api/feature/get-date",
-    handler: getDateTime,
+    handler: getDate,
     options: {
       auth: false
     }
@@ -176,10 +178,18 @@ export const authRoutes = [
     }
   },
   {
+    method: 'GET',
+    path: "/api/feature/get-timestamp",
+    handler: getTimestamp,
+    options: {
+      auth: false
+    }
+  },
+  {
     method: "POST",
     path: "/api/feature/temperature/sensor",
     handler: receiveSensorTemperature,
-    options: { auth: false } // IoT bebas akses
+    options: { auth: false }
   },
   {
     method: "GET",
@@ -201,22 +211,20 @@ export const authRoutes = [
   path: '/api/feature-usage/{id}',
   handler: deleteFeatureUsageById,
   options: { auth: 'jwt' }
-},
-{
-  method: 'DELETE',
-  path: '/api/feature-usage',
-  handler: deleteAllFeatureUsage,
-  options: { auth: 'jwt' }
-},
-{
-  method: 'GET',
-  path: '/api/running-text/speed',
-  handler: handleSettingSpeedRunningText,
-  options: {
-    auth: false
+  },
+  {
+    method: 'DELETE',
+    path: '/api/feature-usage',
+    handler: deleteAllFeatureUsage,
+    options: { auth: 'jwt' }
+  },
+  {
+    method: 'GET',
+    path: '/api/running-text/speed',
+    handler: handleSettingSpeedRunningText,
+    options: {
+      auth: false
+    }
   }
-}
-
-
 
 ];

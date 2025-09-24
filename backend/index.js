@@ -3,7 +3,9 @@ import Jwt from 'hapi-auth-jwt2';
 import { authRoutes } from './routes/routes.js';
 import inert from '@hapi/inert';
 import path from 'path';
+import dotenv from 'dotenv';
 
+dotenv.config();
 
 const JWT_SECRET = "secretkey123";
 
@@ -16,14 +18,14 @@ const validateUser = async (decoded, request, h) => {
 
 const init = async () => {
   const server = Hapi.server({
-    port: 5000,
-    host: 'localhost',
+    port: process.env.PORT,
+    host: process.env.HOST,
     routes: {
       cors: {
         origin: ['*'],
-        headers: ['Authorization', 'Content-Type', 'Accept', 'Origin', 'X-Requested-With'],
-        additionalHeaders: ['cache-control', 'x-requested-with'],
-        credentials: true
+        headers: ['Accept', 'Authorization', 'Content-Type', 'If-None-Match'],
+        credentials: true,
+        exposedHeaders: ['Authorization']
       }
     }
   });
@@ -42,32 +44,14 @@ const init = async () => {
     }
   });
 
-
   server.auth.strategy('jwt', 'jwt', {
     key: JWT_SECRET,
     validate: validateUser,
     verifyOptions: { algorithms: ['HS256'] },
   });
 
-  server.auth.default('jwt'); 
+  server.auth.default('jwt');
   server.route(authRoutes);
-
-  server.route({
-    method: 'OPTIONS',
-    path: '/{any*}',
-    handler: (request, h) => {
-      const response = h.response().code(200);
-      response.header('Access-Control-Allow-Origin', '*');
-      response.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      response.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept, Origin, X-Requested-With');
-      response.header('Access-Control-Allow-Credentials', 'true');
-      return response;
-    },
-    options: {
-      auth: false,
-      cors: false
-    }
-  });
 
   await server.start();
   console.log(`🚀 Server running at: ${server.info.uri}`);

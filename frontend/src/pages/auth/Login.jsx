@@ -5,6 +5,7 @@ import { loginUser } from "../../service/authServices";
 import { Link } from "react-router-dom";
 import { useContext } from "react";
 import { LoadingContext } from "../../contexts/LoadingContext";
+import axios from "axios";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -37,17 +38,16 @@ export default function Login() {
         throw new Error("Token tidak diterima dari server");
       }
 
-      // Simpan token
       localStorage.setItem("token", res.token);
       console.log("Token disimpan:", res.token);
 
-      // Verifikasi penyimpanan token
+      axios.defaults.headers.common['Authorization'] = `Bearer ${res.token}`;
+
       const storedToken = localStorage.getItem("token");
       if (storedToken !== res.token) {
         throw new Error("Gagal menyimpan token di localStorage");
       }
 
-      // Navigasi ke dashboard
       navigate("/dashboard");
       
     } catch (err) {

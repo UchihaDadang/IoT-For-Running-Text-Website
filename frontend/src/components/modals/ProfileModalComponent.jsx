@@ -11,10 +11,10 @@ import {
 } from "react-bootstrap";
 import AvatarDefault from "../../../src/assets/default-avatar.jpg";
 import { UserContext } from "../../contexts/userContext";
+import BASE_API_FRTNEND from "../../config/apiConifg";
 
 export default function ProfilModalComponent({ show = true, onClose, onProfileUpdate }) {
   const { user, setUser } = useContext(UserContext);
-
   const [editName, setEditName] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -51,13 +51,13 @@ export default function ProfilModalComponent({ show = true, onClose, onProfileUp
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
         setPhotoError(`Tipe file tidak didukung: ${file.type}. Gunakan JPEG, PNG, GIF, atau WebP`);
-        e.target.value = ''; // Reset file input
+        e.target.value = '';
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
         setPhotoError("Ukuran file maksimal 5MB");
-        e.target.value = ''; // Reset file input
+        e.target.value = ''; 
         return;
       }
 
@@ -133,7 +133,7 @@ export default function ProfilModalComponent({ show = true, onClose, onProfileUp
         console.log(`${key}:`, value);
       }
 
-      const response = await fetch("http://localhost:5000/api/auth/update-profile", {
+      const response = await fetch(`${BASE_API_FRTNEND}/api/auth/update-profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`
@@ -154,20 +154,18 @@ export default function ProfilModalComponent({ show = true, onClose, onProfileUp
       const firstName = nameParts[0];
       const lastName = nameParts.slice(1).join(" ");
       
-      // Update user context with new data
       const updatedUser = {
         ...user,
         first_name: firstName,
         last_name: lastName,
         profile_picture: data.user?.profile_picture || user.profile_picture,
         profile_picture_url: data.user?.profile_picture 
-          ? `http://localhost:5000/uploads/${data.user.profile_picture}?t=${Date.now()}`
+          ? `${BASE_API_FRTNEND}/uploads/${data.user.profile_picture}?t=${Date.now()}`
           : null
       };
       
       setUser(updatedUser);
 
-      // Call onProfileUpdate with updated user data
       if (typeof onProfileUpdate === 'function') {
         onProfileUpdate(updatedUser);
       }
@@ -207,10 +205,9 @@ export default function ProfilModalComponent({ show = true, onClose, onProfileUp
     onClose();
   };
 
-  // Display current photo or preview
   const displayPhoto = photoPreview 
     || (user?.profile_picture 
-        ? `http://localhost:5000/uploads/${user.profile_picture}?t=${Date.now()}`
+        ? `${BASE_API_FRTNEND}/uploads/${user.profile_picture}?t=${Date.now()}`
         : AvatarDefault);
 
   return (

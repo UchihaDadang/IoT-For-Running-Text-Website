@@ -4,10 +4,10 @@ import jwt from "jsonwebtoken";
 import formidable from 'formidable';
 import path from 'path';
 import fs from 'fs';
+import { BASE_API_BCKEND } from '../config/apiConfig.js';
 
 const JWT_SECRET = "secretkey123";
 
-// Fungsi Register User
 export const registerUser = async (request, h) => {
   try {
     const {
@@ -115,37 +115,50 @@ export const registerUser = async (request, h) => {
   }
 };
 
-// Fungsi Login - ✅ Sudah diperbarui: menambahkan first_name & last_name di token
 export const login = async (request, h) => {
-  const { email, password } = request.payload;
   try {
+    const { email, password } = request.payload;
     const [users] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+    
     if (users.length === 0) {
       return h.response({ success: false, message: "User not found" }).code(404);
     }
+
     const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
+    
     if (!isMatch) {
       return h.response({ success: false, message: "Incorrect password" }).code(401);
     }
 
     const token = jwt.sign({
       id: user.id,
-      first_name: user.first_name,
-      last_name: user.last_name,
+      name: `${user.first_name} ${user.last_name}`,
       role: user.role
     }, JWT_SECRET, { expiresIn: "2h" });
 
-    await db.execute("INSERT INTO login_history (user_id) VALUES (?)", [user.id]);
-
-    return { success: true, token };
-  } catch (err) {
-    console.error(err);
-    return h.response({ success: false, message: "Internal Server Error" }).code(500);
+    return h.response({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        email: user.email,
+        role: user.role
+      }
+    })
+    .header('Authorization', `Bearer ${token}`)
+    .code(200);
+    
+  } catch (error) {
+    console.error("Login error:", error);
+    return h.response({ 
+      success: false, 
+      message: "Internal server error" 
+    }).code(500);
   }
 };
 
-// Middleware Role
 export const requireRole = (allowedRoles) => {
   return (request, h) => {
     const userRole = request.auth.credentials.role;
@@ -161,6 +174,7 @@ export const requireRole = (allowedRoles) => {
 
 import { sendOTPEmail } from "../utils/emailSender.js";
 import { request } from 'http';
+import { time } from 'console';
 
 const otpMap = new Map();
 
@@ -204,22 +218,36 @@ export const getProfile = async (request, h) => {
     );
 
     if (rows.length === 0) {
-      return h.response({ success: false, message: "User tidak ditemukan" }).code(404);
+      return h.response({ 
+        success: false, 
+        message: "User tidak ditemukan" 
+      })
+      .header('Access-Control-Allow-Origin', 'http://10.25.152.24/5173')
+      .code(404);
     }
 
     const user = rows[0];
     
     if (user.profile_picture) {
-      user.profile_picture_url = `http://localhost:5000/uploads/${user.profile_picture}?t=${Date.now()}`;
+      user.profile_picture_url = `${BASE_API_BCKEND}/uploads/${user.profile_picture}?t=${Date.now()}`;
     }
 
     return h.response({ 
       success: true, 
       user 
-    }).code(200);
+    })
+    .header('Access-Control-Allow-Origin', 'http://10.25.152.24/5173')
+    .header('Access-Control-Expose-Headers', 'Authorization')
+    .code(200);
+    
   } catch (error) {
     console.error("getProfile error:", error);
-    return h.response({ success: false, message: "Terjadi kesalahan server" }).code(500);
+    return h.response({ 
+      success: false, 
+      message: "Terjadi kesalahan server" 
+    })
+    .header('Access-Control-Allow-Origin', 'http://10.25.152.24/5173')
+    .code(500);
   }
 };
 
@@ -260,7 +288,7 @@ export const updateProfile = async (request, h) => {
       user: {
         ...updatedUser[0],
         profile_picture_url: updatedUser[0].profile_picture 
-          ? `http://localhost:5000/uploads/${updatedUser[0].profile_picture}?t=${Date.now()}`
+          ? `${BASE_API_BCKEND}/uploads/${updatedUser[0].profile_picture}?t=${Date.now()}`
           : null
       }
     }).code(200);
@@ -368,8 +396,8 @@ export const getLoginHistory = async (request, h) => {
       name: `${row.first_name} ${row.last_name}`,
       status: row.role,
       photo: row.profile_picture
-        ? `http://localhost:5000/uploads/${row.profile_picture}`
-        : 'http://localhost:5000/uploads/default-avatar.jpg',
+        ? `${BASE_API_BCKEND}/uploads/${row.profile_picture}`
+        : `${BASE_API_BCKEND}/uploads/default-avatar.jpg`,
       loginTime: new Date(row.login_time).toISOString() 
     }));
 
@@ -445,7 +473,7 @@ export const handleEditText = async (request, h) => {
     await db.query(
       `INSERT INTO feature_usage_history (user_id, name, feature, change_description, used_at)
       VALUES (?, ?, 'Edit Text', ?, NOW())`,
-      [user.id, fullName, `Teks diubah menjadi: ${text}`]
+      [user.id, fullName, text]
     );
 
     return h.response({ success: true, message: 'Teks berhasil diperbarui.' }).code(200);
@@ -593,7 +621,7 @@ export const handleDateTime = async (request, h) => {
       .slice(0, 10);
 
     const finalDate = date || localDate;
-    const defaultTime = '00:00:00'; // default jika belum ada fitur edit jam
+    const defaultTime = '00:00:00';
 
     await db.query(
       `INSERT INTO display_datetime (date, time, mode, created_at, updated_at)
@@ -618,10 +646,10 @@ export const handleDateTime = async (request, h) => {
   }
 };
 
-export const getDateTime = async (request, h) => {
+export const getDate = async (request, h) => {
   try {
     const [rows] = await db.query(
-      `SELECT date, time, mode FROM display_datetime ORDER BY id DESC LIMIT 1`
+      `SELECT date, mode FROM display_datetime ORDER BY id DESC LIMIT 1`
     );
 
     if (rows.length === 0) {
@@ -630,17 +658,15 @@ export const getDateTime = async (request, h) => {
         .code(404);
     }
 
-    // Konversi ke zona waktu lokal (WIB/GMT+7)
     const rawDate = new Date(rows[0].date);
-    rawDate.setHours(rawDate.getHours() + 7); // tambah 7 jam
+    rawDate.setHours(rawDate.getHours() + 7);
 
-    const dateString = rawDate.toISOString().split('T')[0]; // hanya ambil yyyy-mm-dd
+    const dateString = rawDate.toISOString().split('T')[0];
 
     return h.response({
       status: "success",
       data: {
         date: dateString,
-        time: rows[0].time,
         mode: rows[0].mode
       }
     }).code(200);
@@ -701,110 +727,177 @@ export const getTime = async (request, h) => {
   }
 };
 
+export const getTimestamp = async (request, h)=> {
+  try {
+    const [rows] = await db.query(
+      `SELECT CONCAT(date, ' ', time) AS timestamp, updated_at, mode
+      FROM display_datetime
+      ORDER BY id DESC
+      LIMIT 1`
+    );
+    if (rows.length === 0){
+      return h.response({error : 'no dotetime found'}).code(404);
+    }
+  return h.response({
+    timestamp: rows[0].timestamp,
+    updated_at: rows[0].updated_at,
+    mode: rows[0].mode
+  }).code(200);
+} catch (error) {
+  console.log(error);
+  return h.response({error : 'Database error'}).code(500);
+}
+};
+
+async function insertTemperature(conn, temperature, mode, source, user) {
+  // 1. Simpan histori
+  await conn.query(
+    `INSERT INTO temperature_data (temperature, mode, source) VALUES (?, ?, ?)`,
+    [temperature, mode, source]
+  );
+
+  // 2. Nonaktifkan tampilan aktif lama
+  await conn.query(`UPDATE display_temperature SET is_active = FALSE`);
+
+  // 3. Simpan tampilan aktif baru
+  await conn.query(
+    `INSERT INTO display_temperature (temperature, mode, source, is_active) VALUES (?, ?, ?, TRUE)`,
+    [temperature, mode, source]
+  );
+
+  // 4. Catat history penggunaan (hanya jika manual/user)
+  if (source === 'user' && user) {
+    const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
+    await conn.query(
+      `INSERT INTO feature_usage_history (user_id, name, feature, change_description, used_at)
+       VALUES (?, ?, 'temperature', ?, NOW())`,
+      [user.id, fullName, `Set temperature to ${temperature}°C (${mode})`]
+    );
+  }
+};
+
+export const handleTemperature = async (request, h) => {
+  const { temperature, mode, source = "user" } = request.payload;
+  const user = request.auth.credentials;
+  const fullName = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim();
+
+  try {
+    // Validasi mode
+    if (mode !== "auto" && mode !== "manual") {
+      return h.response({ status: "error", message: "Mode tidak valid" }).code(400);
+    }
+
+    // Nonaktifkan record lama
+    await db.query(`UPDATE display_temperature SET is_active = FALSE`);
+
+    if (mode === "auto") {
+      // Auto: suhu kosong, hanya set mode
+      await db.query(
+        `INSERT INTO display_temperature (temperature, mode, source, is_active) VALUES (NULL, 'auto', ?, TRUE)`,
+        [source]
+      );
+    } else {
+      // Manual: suhu harus valid
+      if (typeof temperature !== "number") {
+        return h.response({ status: "error", message: "Suhu manual harus angka" }).code(400);
+      }
+
+      await db.query(
+        `INSERT INTO display_temperature (temperature, mode, source, is_active) VALUES (?, 'manual', ?, TRUE)`,
+        [temperature, source]
+      );
+
+      // Simpan ke history
+      await db.query(
+        `INSERT INTO feature_usage_history (user_id, name, feature, change_description, used_at)
+         VALUES (?, ?, 'temperature', ?, NOW())`,
+        [user.id, fullName, `Set temperature to ${temperature}°C (manual)`]
+      );
+    }
+
+    return h.response({
+      status: "success",
+      data: { temperature: temperature || null, mode, source },
+    }).code(200);
+  } catch (err) {
+    console.error("Database error:", err);
+    return h.response({
+      status: "error",
+      message: err.sqlMessage || "Gagal menyimpan suhu",
+    }).code(500);
+  }
+};
+
 export const receiveSensorTemperature = async (request, h) => {
   const { temperature } = request.payload;
 
   try {
-    // Simpan ke log
+    // Simpan ke temperature_data (histori)
     await db.query(
       `INSERT INTO temperature_data (temperature, mode, source) VALUES (?, 'auto', 'sensor')`,
       [temperature]
     );
 
-    // Simpan ke tampilan display (hanya sekali yang paling baru)
-    await db.query(
-      `INSERT INTO display_temperature (temperature, mode, created_at, updated_at)
-       VALUES (?, 'auto', NOW(), NOW())`,
-      [temperature]
+    // Jika mode aktif sekarang auto → update tampilan aktif
+    const [current] = await db.query(
+      `SELECT mode FROM display_temperature WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 1`
     );
 
-    return h.response({ status: "success", message: "Data suhu dari sensor berhasil disimpan & ditampilkan." }).code(200);
+    if (current.length > 0 && current[0].mode === "auto") {
+      await db.query(`UPDATE display_temperature SET is_active = FALSE`);
+      await db.query(
+        `INSERT INTO display_temperature (temperature, mode, source, is_active) VALUES (?, 'auto', 'sensor', TRUE)`,
+        [temperature]
+      );
+    }
+
+    return h.response({
+      status: "success",
+      data: { temperature, mode: "auto", source: "sensor" },
+    }).code(200);
   } catch (err) {
-    console.error("Error simpan suhu sensor:", err);
-    return h.response({ status: "error", message: "Gagal simpan suhu." }).code(500);
-  }
-};
-
-export const saveManualTemperature = async (request, h) => {
-  const { temperature, mode } = request.payload;
-  const user = request.auth.credentials;
-
-  try {
-    await db.query(
-      `INSERT INTO temperature_data (temperature, mode, source) VALUES (?, ?, 'user')`,
-      [temperature, mode]
-    );
-
-    await db.query(
-      `INSERT INTO feature_usage_history (user_id, name, feature, change_description, used_at)
-       VALUES (?, ?, 'Edit Temperature', ?, NOW())`,
-      [
-        user.id,
-        `${user.first_name} ${user.last_name}`,
-        `Suhu diubah menjadi: ${temperature}°C (${mode})`
-      ]
-    );
-
-    return h.response({ status: "success", message: "Suhu berhasil disimpan." }).code(200);
-  } catch (err) {
-    console.error("Error simpan suhu manual:", err);
-    return h.response({ status: "error", message: "Gagal menyimpan suhu." }).code(500);
-  }
-};
-
-export const handleTemperature = async (request, h) => {
-  const { temperature, mode } = request.payload;
-  const user = request.auth.credentials;
-
-  try {
-    // Simpan ke display_temperature (untuk ditampilkan ke IoT)
-    await db.query(
-      `INSERT INTO display_temperature (temperature, mode, created_at, updated_at)
-       VALUES (?, ?, NOW(), NOW())`,
-      [temperature, mode]
-    );
-
-    // Simpan ke temperature_data (log lengkap)
-    await db.query(
-      `INSERT INTO temperature_data (temperature, mode, source)
-       VALUES (?, ?, 'user')`,
-      [temperature, mode]
-    );
-
-    // Simpan ke riwayat
-    await db.query(
-      `INSERT INTO feature_usage_history (user_id, name, feature, change_description, used_at)
-       VALUES (?, ?, 'Edit Temperature', ?, NOW())`,
-      [
-        user.id,
-        `${user.first_name} ${user.last_name}`,
-        `Suhu diubah menjadi: ${temperature}°C (${mode})`
-      ]
-    );
-
-    return h.response({ status: "success", message: "Suhu berhasil disimpan." }).code(200);
-  } catch (err) {
-    console.error("Error simpan suhu:", err);
-    return h.response({ status: "error", message: "Gagal menyimpan suhu." }).code(500);
+    console.error("Sensor handler error:", err);
+    return h.response({
+      status: "error",
+      message: err.sqlMessage || "Failed to process sensor data",
+    }).code(500);
   }
 };
 
 export const getTemperature = async (request, h) => {
   try {
-    const [rows] = await db.query(
-      `SELECT temperature, mode FROM display_temperature ORDER BY id DESC LIMIT 1`
+    const [active] = await db.query(
+      `SELECT temperature, mode, source, created_at
+       FROM display_temperature
+       WHERE is_active = TRUE
+       ORDER BY created_at DESC
+       LIMIT 1`
     );
 
-    if (rows.length === 0) {
-      return h.response({ status: "empty", message: "Belum ada data suhu." }).code(404);
-    }
+    const [sensor] = await db.query(
+      `SELECT temperature, created_at
+       FROM temperature_data
+       WHERE source = 'sensor'
+       ORDER BY created_at DESC
+       LIMIT 1`
+    );
 
-    return h.response({ status: "success", data: rows[0] }).code(200);
+    return h.response({
+      status: "success",
+      data: {
+        active_temperature: active.length > 0 ? active[0] : null,
+        sensor_temperature: sensor.length > 0 ? sensor[0] : null,
+      },
+    }).code(200);
   } catch (err) {
-    console.error("Error get-temperature:", err);
-    return h.response({ status: "error", message: "Gagal mengambil data suhu." }).code(500);
+    console.error("Get temperature error:", err);
+    return h.response({
+      status: "error",
+      message: "Failed to get temperature",
+    }).code(500);
   }
 };
+
 
 export const handleSettingSpeedRunningText = async (request, h) => {
         try {
@@ -820,7 +913,7 @@ export const handleSettingSpeedRunningText = async (request, h) => {
         return h.response("50").code(500); // fallback speed
       }
 
-}
+};
 
 
 

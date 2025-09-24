@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Container, Button, Form, Card as BsCard } from "react-bootstrap";
 import { ArrowLeft, TrashFill } from "react-bootstrap-icons";
 import FeatureUsageCard from "../components/FeatureUsageCard";
+import BASE_API_FRTNEND from "../config/apiConifg";
 
 export default function RiwayatUsagePage() {
   const [historyList, setHistoryList] = useState([]);
@@ -10,7 +11,7 @@ export default function RiwayatUsagePage() {
   const fetchUsageHistory = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/feature/usage", {
+      const response = await fetch(`${BASE_API_FRTNEND}/api/feature/usage`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -33,7 +34,7 @@ export default function RiwayatUsagePage() {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`http://localhost:5000/api/feature-usage/${id}`, {
+      const response = await fetch(`${BASE_API_FRTNEND}/api/feature-usage/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -52,7 +53,7 @@ export default function RiwayatUsagePage() {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`http://localhost:5000/api/feature-usage`, {
+      const response = await fetch(`${BASE_API_FRTNEND}/api/feature-usage`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

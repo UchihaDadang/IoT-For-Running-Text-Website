@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Container, Form, Card, Button, Row, Col, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import BASE_API_FRTNEND from "../../config/apiConifg";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -133,7 +134,7 @@ export default function Register() {
         timeout: 10000, 
       };
 
-      const response = await axios.post("http://localhost:5000/register", submitData, config);
+      const response = await axios.post(`${BASE_API_FRTNEND}/register`, submitData, config);
       
       console.log("Registration successful:", response.data);
       
@@ -222,7 +223,7 @@ export default function Register() {
         console.error("Network error - no response received", error.request);
         setMessage({ 
           type: "danger", 
-          text: "Tidak dapat terhubung ke server. Pastikan server berjalan di http://localhost:5000" 
+          text: `Tidak dapat terhubung ke server. Pastikan server berjalan di ${BASE_API_FRTNEND}` 
         });
         
       } else if (error.code === 'ECONNABORTED') {

@@ -3,6 +3,7 @@ import { Modal, Button, Form, Card } from "react-bootstrap";
 import { useUser } from "../../contexts/userContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import BASE_API_FRTNEND from "../../config/apiConifg";
 
 export default function RunningTextModal({ show, onClose, onSave }) {
   const [text, setText] = useState("");
@@ -15,7 +16,7 @@ export default function RunningTextModal({ show, onClose, onSave }) {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "http://localhost:5000/api/feature/edit-text",
+        `${BASE_API_FRTNEND}/api/feature/edit-text`,
         {
           text,
           userId: user.id,
@@ -63,17 +64,17 @@ export default function RunningTextModal({ show, onClose, onSave }) {
     }
 
     try {
-      const token = localStorage.getItem("token"); // Ambil token dari localStorage
+      const token = localStorage.getItem("token");
 
       const res = await axios.post(
-        "http://localhost:5000/api/feature/template",
+        `${BASE_API_FRTNEND}/api/feature/template`,
         {
           text,
           userId: user.id,
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Kirim token ke backend
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -95,7 +96,7 @@ export default function RunningTextModal({ show, onClose, onSave }) {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get("http://localhost:5000/api/feature/template", {
+      const res = await axios.get(`${BASE_API_FRTNEND}/api/feature/template`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

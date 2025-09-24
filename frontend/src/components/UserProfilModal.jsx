@@ -3,6 +3,7 @@ import { Card, Image, Col, Row, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import AvatarDefault from "../../src/assets/default-avatar.jpg";
 import { useUser } from "../contexts/userContext";
+import BASE_API_FRTNEND from "../config/apiConifg";
 
 export default function UserProfileModal({ refreshTrigger }) {
   const { user, setUser } = useUser();
@@ -23,7 +24,7 @@ export default function UserProfileModal({ refreshTrigger }) {
       try {
         setIsLoading(true);
         
-        const response = await fetch("http://localhost:5000/api/auth/profile", {
+        const response = await fetch(`${BASE_API_FRTNEND}/api/auth/profile`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -44,7 +45,7 @@ export default function UserProfileModal({ refreshTrigger }) {
           const userWithUrl = {
             ...data.user,
             profile_picture_url: data.user.profile_picture 
-              ? `http://localhost:5000/uploads/${data.user.profile_picture}?t=${refreshTrigger || Date.now()}`
+              ? `${BASE_API_FRTNEND}/uploads/${data.user.profile_picture}?t=${refreshTrigger || Date.now()}`
               : null
           };
           setUser(userWithUrl);
@@ -60,7 +61,7 @@ export default function UserProfileModal({ refreshTrigger }) {
       }
     };
 
-    fetchProfile();
+  fetchProfile();
   }, [refreshTrigger, navigate, setUser]);
 
   if (isLoading) {

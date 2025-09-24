@@ -16,6 +16,7 @@ import RunningTextModal from "../../src/components/modals/RunningTextModal";
 import TemperatureModal from "../../src/components/modals/TemperatureModal";
 import DateModal from "../../src/components/modals/DateModal";
 import { useLoginHistory } from "../../src/contexts/LoginHistoryContext";
+import BASE_API_FRTNEND from "../../src/config/apiConifg";
 
 export default function MobileDashboardLayout() {
   const [showProfile, setShowProfile] = useState(false);
@@ -26,7 +27,6 @@ export default function MobileDashboardLayout() {
   const token = localStorage.getItem("token");
   const [refreshKey, setRefreshKey] = useState(Date.now());
   const { loginHistory, fetchLoginHistory } = useLoginHistory();
-
   const [featureUsage, setFeatureUsage] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +55,7 @@ useEffect(() => {
 
   const fetchFeatureUsage = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/feature/usage", {
+      const response = await fetch(`${BASE_API_FRTNEND}/api/feature/usage`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -80,7 +80,7 @@ useEffect(() => {
   };
 
   fetchFeatureUsage();
-  intervalId = setInterval(fetchFeatureUsage, 5000); // <= 5 detik
+  intervalId = setInterval(fetchFeatureUsage, 5000); 
 
   return () => clearInterval(intervalId);
 }, [token, featureUsage]);
@@ -114,7 +114,7 @@ useEffect(() => {
             <FeatureButton icon={EditTextIcon} label="Edit Teks" onClick={() => setShowRunningTextModal(true)} />
             <FeatureButton icon={EditTemperatureIcon} label="Edit Suhu" onClick={() => setShowTemperatureModal(true)} />
             <FeatureButton icon={EditDateIcon} label="Edit Tanggal" onClick={() => setShowDateModal(true)} />
-            <FeatureButton icon={EditTimeIcon} label="Custom Waktu" onClick={() => setShowClockModal(true)} />
+            <FeatureButton icon={EditTimeIcon} label="Edit Waktu" onClick={() => setShowClockModal(true)} />
           </div>
 
           {/* Riwayat Login */}

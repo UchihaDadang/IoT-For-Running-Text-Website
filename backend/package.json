@@ -14,9 +14,10 @@
   "dependencies": {
     "@hapi/hapi": "^21.4.0",
     "@hapi/inert": "^7.1.0",
+    "@paralleldrive/cuid2": "^2.2.2",
     "axios": "^1.9.0",
     "bcrypt": "^6.0.0",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.1",
     "formidable": "^3.5.4",
     "hapi-auth-jwt2": "^11.0.0",
     "jsonwebtoken": "^9.0.2",

@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Modal, Button, Form, ToggleButton, ToggleButtonGroup } from "react-bootstrap";
 import axios from "axios";
 import { toast } from "react-toastify";
+import BASE_API_FRTNEND from "../../config/apiConifg";
 
 export default function DateModal({ show, onClose, onSave }) {
-  const [mode, setMode] = useState("auto"); // auto / manual
+  const [mode, setMode] = useState("auto"); 
   const [date, setDate] = useState("");
 
   useEffect(() => {
@@ -23,10 +24,10 @@ export default function DateModal({ show, onClose, onSave }) {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("token"); // kalau pakai auth token
+      const token = localStorage.getItem("token"); 
       await axios.post(
-        "http://localhost:5000/api/feature/edit-date",
-        { date },
+        `${BASE_API_FRTNEND}/api/feature/edit-date`,
+        { date, mode },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -44,7 +45,6 @@ export default function DateModal({ show, onClose, onSave }) {
       toast.error("Gagal menyimpan tanggal");
     }
   };
-
 
   return (
     <Modal show={show} onHide={onClose} centered backdrop="static" keyboard={false}>
